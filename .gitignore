@@ -2,6 +2,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/java,visualstudiocode,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=java,visualstudiocode,windows
 
+### Draw ###
+#class diagram
+*.drawio
+
 ### Java ###
 # Compiled class file
 *.class

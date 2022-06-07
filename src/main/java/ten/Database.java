@@ -15,7 +15,7 @@ public class Database {
         return mInstance;
     }
 
-    public static Jedis getJedis() {
+    public Jedis getJedis() {
         var result = jedis.get();
         if (result == null) {
             result = pool.getResource();

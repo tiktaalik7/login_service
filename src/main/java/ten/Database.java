@@ -11,10 +11,16 @@ public class Database {
     
     private static Database mInstance = new Database();
 
+    /**
+     * return Database instance for singleton design pattern
+     */
     public static Database getInstance() {
         return mInstance;
     }
 
+    /**
+     * return Jedis instance thread by thread
+     */
     public Jedis getJedis() {
         var result = jedis.get();
         if (result == null) {

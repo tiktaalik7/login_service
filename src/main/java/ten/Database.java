@@ -18,7 +18,9 @@ public class Database {
     public static Database getInstance() {
         return mInstance;
     }
-
+    /*
+     * 제디스 객체를 스레드별로 하나씩 사용할 수 있도록 함
+     */
     public Jedis getJedis() {
         var result = jedis.get();
         if (result == null) {

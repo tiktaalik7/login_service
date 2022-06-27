@@ -14,10 +14,10 @@ public class Member {
     public String get_PW(String id) {
         var database = mDatabase.getJedis();
 
-        return database.hget(id + "_info", "pw");
+        return database.hget(id + "_info", "key_PW");
     }
 
-    public static void set_PW(String id, String pw) throws NoSuchAlgorithmException {
+    public void set_PW(String id, String pw) throws NoSuchAlgorithmException {
         var database = mDatabase.getJedis();
         var value = MessageDigest.getInstance("SHA-256");
         var builder = new StringBuilder();
@@ -28,7 +28,7 @@ public class Member {
             builder.append(String.format("%02x", piece));
         }
         pw = builder.toString();
-        map.put("pw", pw);
+        map.put("key_PW", pw);
         database.hmset(id + "_info", map);
 
         return;
@@ -37,14 +37,14 @@ public class Member {
     public String get_Phone(String id) {
         var database = mDatabase.getJedis();
 
-        return database.hget(id + "_info", "phone");
+        return database.hget(id + "_info", "key_Phone");
     }
 
     public void set_Phone(String id, String phone) {
         var database = mDatabase.getJedis();
         var map = new HashMap<String, String>();
 
-        map.put("phone", phone);
+        map.put("key_Phone", phone);
         database.hmset(id + "_info", map);
 
         return;
@@ -53,10 +53,10 @@ public class Member {
     public String get_Answer(String id) {
         var database = mDatabase.getJedis();
 
-        return database.hget(id + "_info", "ans");
+        return database.hget(id + "_info", "key_Ans");
     }
 
-    public static void set_Answer(String id, String[] ans) throws NoSuchAlgorithmException {
+    public void set_Answer(String id, String[] ans) throws NoSuchAlgorithmException {
         var database = mDatabase.getJedis();
         var builder = new StringBuilder();
         var value = MessageDigest.getInstance("SHA-256");
@@ -70,22 +70,22 @@ public class Member {
         for (var piece : value.digest()) {
             builder.append(String.format("%02x", piece));
         }
-        map.put("ans", builder.toString());
+        map.put("key_Ans", builder.toString());
         database.hmset(id + "_info", map);
 
         return;
     }
 
-    public static void set(String id, String pw, String phone, String[] ans) throws NoSuchAlgorithmException {
+    public void set(String id, String pw, String phone, String[] ans) throws NoSuchAlgorithmException {
         var database = mDatabase.getJedis();
         var map = new HashMap<String, String>();
 
-        map.put("id", id);
-        map.put("phone", phone);
+        map.put("key_ID", id);
+        map.put("key_Phone", phone);
         database.hmset(id + "_info", map);
         set_Answer(id, ans);
         set_PW(id, pw);
-        database.sadd("members", id);
+        database.sadd("key_Members", id);
 
         return;
     }

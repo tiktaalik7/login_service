@@ -8,6 +8,10 @@ import java.util.Set;
 
 public class System {
     Database mDatabase = Database.getInstance();
+    private static final int EXISTED = 0;
+    private static final int CHANGE_SUCCESS = 1;
+    private static final int WRONG_FORM = -1;
+    private static final int UNIQUE_NUMBER = 1;
 
     public boolean login(String id, String pw) throws NoSuchAlgorithmException {
         var database = mDatabase.getJedis();
@@ -15,12 +19,12 @@ public class System {
         var builder = new StringBuilder();
 
         if (check_IDPW(id, pw)) {
-            if (database.sismember("members", id)) {
+            if (database.sismember("key_Members", id)) {
                 value.update(pw.getBytes());
                 for (var piece : value.digest()) {
                     builder.append(String.format("%02x", piece));
                 }
-                if (database.hget(id + "_info", "pw").equals(builder.toString())) {
+                if (database.hget(id + "_info", "key_PW").equals(builder.toString())) {
                     return true;
                 }
             }
@@ -33,17 +37,13 @@ public class System {
 
     }
 
-    public boolean register(String id, String pw, String phone, String[] ans) {
+    public boolean register(String id, String pw, String phone, String[] ans) throws NoSuchAlgorithmException {
         var database = mDatabase.getJedis();
 
-        if (check_IDPW(id, pw) && !database.sismember("members", id)) {
-            if ((check_Phone(phone) == 1) && check_Ans(ans)) {
-                try {
-                    Member.set(id, pw, phone, ans);
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                    return false;
-                }
+        if (check_IDPW(id, pw) && !database.sismember("key_Members", id)) {
+            if ((check_Phone(phone) == UNIQUE_NUMBER) && check_Ans(ans)) {
+                Member member = new Member();
+                member.set(id, pw, phone, ans);
                 return true;
             }
         }
@@ -55,10 +55,10 @@ public class System {
         var database = mDatabase.getJedis();
         String result = null;
 
-        if (check_Phone(phone) == 0) {
-            Set<String> temp = database.smembers("members");
+        if (check_Phone(phone) == EXISTED) {
+            Set<String> temp = database.smembers("key_Members");
             for (var member : temp) {
-                if (database.hget(member + "_info", "phone").equals(phone)) {
+                if (database.hget(member + "_info", "key_Phone").equals(phone)) {
                     result = member;
                 }
             }
@@ -82,11 +82,11 @@ public class System {
         var map = new HashMap<String, String>();
         String result;
 
-        if (check_IDPW(id, "password4test") && check_Phone(phone) == 0 && check_Ans(ans)) {
-            var members = database.smembers("members");
+        if (check_IDPW(id, "password4test") && check_Phone(phone) == EXISTED && check_Ans(ans)) {
+            var members = database.smembers("key_Members");
             for (var member : members) {
                 if (member.equals(id)) {
-                    if (database.hget(id + "_info", "phone").equals(phone)) {
+                    if (database.hget(id + "_info", "key_Phone").equals(phone)) {
                         for (var piece : ans) {
                             builder.append(piece + "|");
                         }
@@ -95,7 +95,7 @@ public class System {
                         for (var piece : value.digest()) {
                             builder.append(String.format("%02x", piece));
                         }
-                        if (builder.toString().equals(database.hget(id + "_info", "ans"))) {
+                        if (builder.toString().equals(database.hget(id + "_info", "key_Ans"))) {
                             flag = true;
                         }
                     }
@@ -114,7 +114,7 @@ public class System {
             for (var piece : value.digest()) {
                 builder.append(String.format("%02x", piece));
             }
-            map.put("pw", builder.toString());
+            map.put("key_PW", builder.toString());
             database.hmset(id + "_info", map);
             return result;
         }
@@ -135,17 +135,14 @@ public class System {
                 builder.append(String.format("%02x", piece));
             }
             newPW = builder.toString();
-            if (!(database.hget(id + "_info", "pw").equals(newPW))) {
-                map.put("pw", newPW);
+            if (!(database.hget(id + "_info", "key_PW").equals(newPW))) {
+                map.put("key_PW", newPW);
                 database.hmset(id + "_info", map);
-                // change success
-                return 1;
+                return CHANGE_SUCCESS;
             }
-            // same as old one
-            return 0;
+            return EXISTED;
         }
-        // wrong form
-        return -1;
+        return WRONG_FORM;
     }
 
     public boolean check_IDPW(String id, String pw) {
@@ -159,20 +156,17 @@ public class System {
 
     public int check_Phone(String phone) {
         var database = mDatabase.getJedis();
-        var members = database.smembers("members");
+        var members = database.smembers("key_Members");
 
         if (phone.length() == 11) {
             for (var piece : members) {
-                if (phone.equals(database.hget(piece + "_info", "phone"))) {
-                    // duplicated number
-                    return 0;
+                if (phone.equals(database.hget(piece + "_info", "key_Phone"))) {
+                    return EXISTED;
                 }
             }
-            // unique number
-            return 1;
+            return UNIQUE_NUMBER;
         }
-        // wrong form
-        return -1;
+        return WRONG_FORM;
     }
 
     public boolean check_Ans(String[] ans) {

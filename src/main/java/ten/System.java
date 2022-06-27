@@ -37,7 +37,7 @@ public class System {
         var database = mDatabase.getJedis();
 
         if (check_IDPW(id, pw) && !database.sismember("members", id)) {
-            if (!check_Phone(phone) && check_Ans(ans)) {
+            if ((check_Phone(phone) == 1) && check_Ans(ans)) {
                 try {
                     Member.set(id, pw, phone, ans);
                 } catch (NoSuchAlgorithmException e) {
@@ -55,7 +55,7 @@ public class System {
         var database = mDatabase.getJedis();
         String result = null;
 
-        if (check_Phone(phone)) {
+        if (check_Phone(phone) == 0) {
             Set<String> temp = database.smembers("members");
             for (var member : temp) {
                 if (database.hget(member + "_info", "phone").equals(phone)) {
@@ -82,7 +82,7 @@ public class System {
         var map = new HashMap<String, String>();
         String result;
 
-        if (check_IDPW(id, "password4test") && check_Phone(phone) && check_Ans(ans)) {
+        if (check_IDPW(id, "password4test") && check_Phone(phone) == 0 && check_Ans(ans)) {
             var members = database.smembers("members");
             for (var member : members) {
                 if (member.equals(id)) {
@@ -144,7 +144,7 @@ public class System {
             // same as old one
             return 0;
         }
-        // wrong pw form
+        // wrong form
         return -1;
     }
 
@@ -157,19 +157,22 @@ public class System {
         return false;
     }
 
-    public boolean check_Phone(String phone) {
+    public int check_Phone(String phone) {
         var database = mDatabase.getJedis();
         var members = database.smembers("members");
 
         if (phone.length() == 11) {
             for (var piece : members) {
                 if (phone.equals(database.hget(piece + "_info", "phone"))) {
-                    return true;
+                    // duplicated number
+                    return 0;
                 }
             }
+            // unique number
+            return 1;
         }
-
-        return false;
+        // wrong form
+        return -1;
     }
 
     public boolean check_Ans(String[] ans) {

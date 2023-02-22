@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.Set;
 
-public class System {
+public class LoginSystem {
     Database mDatabase = Database.getInstance();
     private static final int EXISTED = 0;
     private static final int SUCCESS = 1;
